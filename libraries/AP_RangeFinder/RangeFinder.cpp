@@ -700,6 +700,12 @@ void RangeFinder::detect_instance(uint8_t instance)
             drivers[instance] = new AP_RangeFinder_analog(*this, instance, state[instance]);
         }
         break;
+    case RangeFinder_TYPE_WayTronic:
+    	if (AP_RangeFinder_WayTronic18mSerial::detect(*this, instance, serial_manager)) {
+			state[instance].instance = instance;
+			drivers[instance] = new AP_RangeFinder_WayTronic18mSerial(*this, instance, state[instance], serial_manager);
+		}
+		break;
     default:
         break;
     }

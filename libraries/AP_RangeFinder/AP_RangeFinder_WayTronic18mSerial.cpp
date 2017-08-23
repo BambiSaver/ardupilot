@@ -54,46 +54,37 @@ bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
     }
 
     // read any available lines from the lidar
-    float sum = 0;
+    uint16_t sum = 0;
     uint16_t count = 0;
     int16_t nbytes = uart->available();
 
 
-    /*CONCEPT and IDEAS
-     * Use a while to wait for the first byte which has always the value of 255
-     * This can be use to sync the reading.
-     * count it is used to count how many measures are in the buffer, in this particcular case
-     * the sensor needs to be triggered so there will be only one measure
-     *  (magari ci sono modi migliori)
-     * while((int)atoi(c)!=255){
-     * 		c = uart->read();	//in this way we are sure to be at the first bit
-     * }
-     * !!!!Check if 255 could be found in other bit than the first one. If yes this iteration has to be avoided
-     */
-
-    while (nbytes-- > 0) {
-        char c = uart->read();
-        if (c == '\r') {
-            linebuf[linebuf_len] = 0;
-            sum += (float)atof(linebuf);
-            count++;
-            linebuf_len = 0;
-        } else if (isdigit(c) || c == '.') {
-            linebuf[linebuf_len++] = c;
-            if (linebuf_len == sizeof(linebuf)) {
-                // too long, discard the line
-                linebuf_len = 0;
-            }
+    for(count; count < nbytes/6;count++){
+    	//check if we are in sync
+        if (uart->read() == 0xFF) {
+        	sum+= (uart->read() -'0')*256; // needed to convert char number to int
+            sum+= uart->read()-'0';
+            //skip the temperature bits
+            uart->read();
+            uart->read();
+            //skip the checksum bit
+            uart->read();
+        }
+        //we are out of sync so we clean the uart buffer and exit the loop
+        else{
+       	uart->flush();
+        count=0;
+        break;
         }
     }
 
-    // we need to write a byte to prompt another reading
-    uart->write('d');
+    // we need to write a null (00000000)to prompt another reading
 
+    uart->write('\0');
     if (count == 0) {
         return false;
     }
-    reading_cm = 100 * sum / count;
+    reading_cm = 10 * sum / count;
     return true;
 }
 
@@ -106,7 +97,7 @@ void AP_RangeFinder_WayTronic18mSerial::update(void)
         // update range_valid state based on distance measured
         last_reading_ms = AP_HAL::millis();
         update_status();
-    } else if (AP_HAL::millis() - last_reading_ms > 200) {
+    } else if (AP_HAL::millis() - last_reading_ms > 400) {
         set_status(RangeFinder::RangeFinder_NoData);
     }
 }
