@@ -78,9 +78,9 @@ bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
         }
     }
 
-    // we need to write a null (00000000)to prompt another reading
-
-    uart->write('\0');
+    // we need to write a double null to prompt another reading;
+    //this will keep the rx port low for about 1.6ms at 9600baund
+    uart->write("\0\0");
     if (count == 0) {
         return false;
     }
