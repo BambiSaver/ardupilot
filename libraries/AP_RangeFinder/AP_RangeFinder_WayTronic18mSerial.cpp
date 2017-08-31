@@ -62,12 +62,12 @@ bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
     for(count; count < nbytes/6;count++){
     	//check if we are in sync
         if (uart->read() == 0xFF) {
-        	sum+= (uart->read() -'0')*256; // needed to convert char number to int
-            sum+= uart->read()-'0';
-            //skip the temperature bits
+        	sum += static_cast<unsigned int>(uart->read()) * 256;
+        	sum += static_cast<unsigned int>(uart->read());
+            //discard the temperature bits
             uart->read();
             uart->read();
-            //skip the checksum bit
+            //discard the checksum bit
             uart->read();
         }
         //we are out of sync so we clean the uart buffer and exit the loop
