@@ -28,6 +28,7 @@
 #include "AP_RangeFinder_uLanding.h"
 #include "AP_RangeFinder_TeraRangerI2C.h"
 #include "AP_RangeFinder_VL53L0X.h"
+#include "AP_RangeFinder_WayTronic18mSerial.h"
 #include <AP_BoardConfig/AP_BoardConfig.h>
 
 extern const AP_HAL::HAL &hal;
@@ -701,9 +702,9 @@ void RangeFinder::detect_instance(uint8_t instance)
         }
         break;
     case RangeFinder_TYPE_WayTronic:
-    	if (AP_RangeFinder_WayTronic18mSerial::detect(*this, instance, serial_manager)) {
+    	if (AP_RangeFinder_WayTronic18mSerial::detect(serial_manager)) {
 			state[instance].instance = instance;
-			drivers[instance] = new AP_RangeFinder_WayTronic18mSerial(*this, instance, state[instance], serial_manager);
+			drivers[instance] = new AP_RangeFinder_WayTronic18mSerial(state[instance], serial_manager);
 		}
 		break;
     default:

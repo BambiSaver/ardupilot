@@ -25,10 +25,9 @@ extern const AP_HAL::HAL& hal;
    constructor is not called until detect() returns true, so we
    already know that we should setup the rangefinder
 */
-AP_RangeFinder_WayTronic18mSerial::AP_RangeFinder_WayTronic18mSerial(RangeFinder &_ranger, uint8_t instance,
-                                                               RangeFinder::RangeFinder_State &_state,
-                                                               AP_SerialManager &serial_manager) :
-    AP_RangeFinder_Backend(_ranger, instance, _state, MAV_DISTANCE_SENSOR_ULTRASOUND)
+AP_RangeFinder_WayTronic18mSerial::AP_RangeFinder_WayTronic18mSerial(RangeFinder::RangeFinder_State &_state,
+        															AP_SerialManager &serial_manager) :
+	AP_RangeFinder_Backend(_state)
 {
     uart = serial_manager.find_serial(AP_SerialManager::SerialProtocol_Lidar, 0);
     if (uart != nullptr) {
@@ -37,11 +36,11 @@ AP_RangeFinder_WayTronic18mSerial::AP_RangeFinder_WayTronic18mSerial(RangeFinder
 }
 
 /* 
-   detect if a Lightware rangefinder is connected. We'll detect by
+   detect if a Waytronic rangefinder is connected. We'll detect by
    trying to take a reading on Serial. If we get a result the sensor is
    there.
 */
-bool AP_RangeFinder_WayTronic18mSerial::detect(RangeFinder &_ranger, uint8_t instance, AP_SerialManager &serial_manager)
+bool AP_RangeFinder_WayTronic18mSerial::detect(AP_SerialManager &serial_manager)
 {
     return serial_manager.find_serial(AP_SerialManager::SerialProtocol_Lidar, 0) != nullptr;
 }
@@ -55,11 +54,11 @@ bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
 
     // read any available lines from the lidar
     uint16_t sum = 0;
-    uint16_t count = 0;
+    uint16_t count;
     int16_t nbytes = uart->available();
 
 
-    for(count; count < nbytes/6;count++){
+    for(count = 0; count < nbytes/6;count++){
     	//check if we are in sync
         if (uart->read() == 0xFF) {
         	sum += static_cast<unsigned int>(uart->read()) * 256;
