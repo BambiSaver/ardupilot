@@ -60,14 +60,18 @@ bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
 
     for(count = 0; count < nbytes/6;count++){
     	//check if we are in sync
+    	hal.console->printf("We got something to read");
         if (uart->read() == 0xFF) {
         	sum += static_cast<unsigned int>(uart->read()) * 256;
+        	hal.console->printf("Distance MSB: %d", sum);
         	sum += static_cast<unsigned int>(uart->read());
+        	hal.console->printf("Distance LSB: %d", sum);
             //discard the temperature bits
             uart->read();
             uart->read();
             //discard the checksum bit
             uart->read();
+
         }
         //we are out of sync so we clean the uart buffer and exit the loop
         else{
@@ -98,5 +102,6 @@ void AP_RangeFinder_WayTronic18mSerial::update(void)
         update_status();
     } else if (AP_HAL::millis() - last_reading_ms > 400) {
         set_status(RangeFinder::RangeFinder_NoData);
+        hal.console->printf("NoData");
     }
 }
