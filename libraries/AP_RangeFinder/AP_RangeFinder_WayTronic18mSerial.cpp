@@ -19,7 +19,8 @@
 #include <ctype.h>
 
 extern const AP_HAL::HAL& hal;
-
+//constnt which define the trigger pulse sequence (00000000)
+const char TRIG = NULL;
 /* 
    The constructor also initialises the rangefinder. Note that this
    constructor is not called until detect() returns true, so we
@@ -49,6 +50,7 @@ bool AP_RangeFinder_WayTronic18mSerial::detect(AP_SerialManager &serial_manager)
 bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
 {
     if (uart == nullptr) {
+	hal.console->printf("uart null pointer");
         return false;
     }
 
@@ -56,16 +58,13 @@ bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
     uint16_t sum = 0;
     uint16_t count;
     int16_t nbytes = uart->available();
-
-
+	
+	
     for(count = 0; count < nbytes/6;count++){
     	//check if we are in sync
-    	hal.console->printf("We got something to read");
-        if (uart->read() == 0xFF) {
+        if ( uart->read() == 0xFF ){
         	sum += static_cast<unsigned int>(uart->read()) * 256;
-        	hal.console->printf("Distance MSB: %d", sum);
         	sum += static_cast<unsigned int>(uart->read());
-        	hal.console->printf("Distance LSB: %d", sum);
             //discard the temperature bits
             uart->read();
             uart->read();
@@ -80,10 +79,8 @@ bool AP_RangeFinder_WayTronic18mSerial::get_reading(uint16_t &reading_cm)
         break;
         }
     }
-
-    // we need to write a double null to prompt another reading;
-    //this will keep the rx port low for about 1.6ms at 9600baund
-    uart->write("\0\0");
+    // we need to write a null to prompt another reading;
+    uart->write(TRIG);
     if (count == 0) {
         return false;
     }
@@ -102,6 +99,5 @@ void AP_RangeFinder_WayTronic18mSerial::update(void)
         update_status();
     } else if (AP_HAL::millis() - last_reading_ms > 400) {
         set_status(RangeFinder::RangeFinder_NoData);
-        hal.console->printf("NoData");
     }
 }
